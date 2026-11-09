@@ -1,0 +1,16 @@
+{
+  "name": "doubledata",
+  "version": "0.1.0",
+  "description": "DoubleData Proxy for agents: account usage and balance, proxy credentials, invoices, ISP proxies, and fetching the web through residential, datacenter and mobile IPs.",
+  "author": { "name": "DoubleData", "url": "https://proxy.doubledata.com" },
+  "homepage": "https://doubledata.mintlify.app/guides/ai-agents",
+  "repository": "https://github.com/doubledata-proxy/doubledata-mcp",
+  "license": "MIT",
+  "keywords": ["proxy", "residential-proxy", "scraping", "mcp", "doubledata"],
+  "mcpServers": {
+    "doubledata": {
+      "command": "npx",
+      "args": ["-y", "github:doubledata-proxy/doubledata-mcp"]
+    }
+  }
+}

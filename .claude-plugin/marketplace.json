@@ -1,0 +1,11 @@
+{
+  "name": "doubledata",
+  "owner": { "name": "DoubleData", "url": "https://proxy.doubledata.com" },
+  "plugins": [
+    {
+      "name": "doubledata",
+      "source": "./",
+      "description": "MCP server and skills for DoubleData Proxy: usage, credentials, invoices, ISP proxies and proxied web requests."
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+node_modules/
+dist/
+coverage/
+doubledata-exports/
+*.log
+.env
