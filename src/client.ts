@@ -49,7 +49,7 @@ export type CredentialSecret = Credential & {
   password: string;
   connection: {
     gateways: Array<{ region: string; host: string; default: boolean }>;
-    ports: { http: number; https: number; socks5: number };
+    ports: { http: number; https: number | null; socks5: number };
   };
 };
 export type Invoice = {
