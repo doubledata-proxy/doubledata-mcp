@@ -86,7 +86,15 @@ export type TrafficProduct = {
 };
 export type PaymentMethod = { id: string; type: string; brand: string; last4: string; exp_month: number; exp_year: number; is_default: boolean };
 export type TrafficOrder = {
-  order: { id: string; product: TrafficProduct; total_cents: number; payment_source: "balance" };
+  order: {
+    id: string;
+    product_id: string;
+    proxy_type: string;
+    amount_gb: number;
+    price_per_gb_cents: number;
+    total_cents: number;
+    payment_source: "balance";
+  };
   traffic_balance: { proxy_type: string; remaining_bytes: number };
 };
 export type TopUp = {

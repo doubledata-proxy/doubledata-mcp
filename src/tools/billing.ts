@@ -46,10 +46,10 @@ export const billingTools = [
     run: async (args, { client }) =>
       withRequestId(args.request_id ?? randomUUID(), async (id) => {
         const result = await client.buyTraffic(args.product_id, id);
-        const { product } = result.order;
+        const { order } = result;
         return json(
           { ...result, request_id: id },
-          `Bought ${product.amount_gb} GB of ${product.proxy_type} traffic for ${formatUSD(result.order.total_cents)} from the balance. ${product.proxy_type} traffic left: ${formatBytes(result.traffic_balance.remaining_bytes)}.`,
+          `Bought ${order.amount_gb} GB of ${order.proxy_type} traffic for ${formatUSD(order.total_cents)} from the balance. ${order.proxy_type} traffic left: ${formatBytes(result.traffic_balance.remaining_bytes)}.`,
         );
       }),
   }),

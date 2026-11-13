@@ -279,7 +279,10 @@ describe("billing tools", () => {
   const cardId = "0b7c9a52-77e2-4f3c-9a59-28f04a2f8f11";
   const retryId = "6f1b7a0e-3a55-4a59-9d55-56f4ad1c2a10";
   const product = { id: productId, proxy_type: "residential", name: "10 GB", description: "", amount_gb: 10, price_per_gb_cents: 300, total_cents: 3000, requires_verification: false };
-  const order = { order: { id: "o1", product, total_cents: 3000, payment_source: "balance" }, traffic_balance: { proxy_type: "residential", remaining_bytes: 12_500_000_000 } };
+  const order = {
+    order: { id: "o1", product_id: productId, proxy_type: "residential", amount_gb: 10, price_per_gb_cents: 300, total_cents: 3000, payment_source: "balance" },
+    traffic_balance: { proxy_type: "residential", remaining_bytes: 12_500_000_000 },
+  };
   const topUp = { top_up: { amount_cents: 2550, currency: "usd", payment_method_id: cardId, receipt_url: null }, balance_cents: 5149 };
 
   it("buys a package from the balance only after confirmation", async () => {
