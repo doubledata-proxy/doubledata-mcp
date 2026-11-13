@@ -19,7 +19,7 @@ Usage:
 
 Environment:
   DOUBLEDATA_API_KEY        Organization API key (overrides the stored key)
-  DOUBLEDATA_TOOLSETS       Comma list: account,credentials,proxy,invoices,isp (default all)
+  DOUBLEDATA_TOOLSETS       Comma list: account,billing,credentials,proxy,invoices,isp (default all)
   DOUBLEDATA_READ_ONLY      true to hide tools that change anything or use traffic
   DOUBLEDATA_OUTPUT_DIR     Where exports and downloads go (default ./doubledata-exports)
   DOUBLEDATA_PROXY_USERNAME / DOUBLEDATA_PROXY_PASSWORD  Default proxy credential

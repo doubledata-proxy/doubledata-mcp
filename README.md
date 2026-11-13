@@ -117,7 +117,7 @@ CLI commands: `doubledata-mcp login`, `logout`, `whoami`, `--help`.
 - **Read-only mode** for dashboards and analysts.
 - **Secrets stay out of chat.** Passwords are masked unless you ask. Snippets use `$DOUBLEDATA_PROXY_PASSWORD`. Files that contain passwords are written with mode `600`. The API key goes in a header, never in a URL.
 - **Prompt-injection hygiene.** Fetched pages are wrapped as untrusted content, and redirects are returned rather than followed.
-- **Spend control.** Give an agent its own credential with `set_traffic_limits`. `add_funds` charges at most $1,000 per call and only saved cards that need no extra authentication. Purchases accept a `request_id`: retrying with the same one never charges twice. Set `DOUBLEDATA_READ_ONLY=true` or leave out the `billing` toolset to stop an agent from spending.
+- **Spend control.** Give an agent its own credential with `set_traffic_limits`. `add_funds` charges at most $1,000 per call and per organization in 24 hours, and only saved cards that need no extra authentication. Purchases accept a `request_id`: retrying with the same one never charges twice. Set `DOUBLEDATA_READ_ONLY=true` or leave out the `billing` toolset to stop an agent from spending.
 
 
 ## How it compares
