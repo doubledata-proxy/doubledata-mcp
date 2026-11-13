@@ -15,13 +15,14 @@ export function jsonResponse(body: unknown, status = 200, headers: Record<string
 }
 
 export function fakeAPI(routes: Record<string, Route>) {
-  const calls: Array<{ method: string; path: string; body: unknown; authorization: string | null }> = [];
+  const calls: Array<{ method: string; path: string; body: unknown; authorization: string | null; requestId: string | null }> = [];
   const fetchImpl = (async (input: string | URL | Request, init?: RequestInit) => {
     const url = new URL(String(input));
     const method = init?.method ?? "GET";
     const path = url.pathname.replace(/^\/api\/v1/, "");
     const body = typeof init?.body === "string" ? JSON.parse(init.body) : undefined;
-    calls.push({ method, path, body, authorization: new Headers(init?.headers).get("Authorization") });
+    const headers = new Headers(init?.headers);
+    calls.push({ method, path, body, authorization: headers.get("Authorization"), requestId: headers.get("X-Request-ID") });
     const route = routes[`${method} ${path}`];
     if (!route) return jsonResponse({ error: { code: "not_found", message: `No fake route for ${method} ${path}` } }, 404);
     return route({ method, path, query: url.searchParams, body });

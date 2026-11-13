@@ -5,7 +5,7 @@ import { dirname, join, resolve } from "node:path";
 export const DEFAULT_API_URL = "https://app.proxy.doubledata.com/api/v1";
 export const DASHBOARD_API_KEY_URL = "https://app.proxy.doubledata.com/dashboard/team";
 
-export const TOOLSETS = ["account", "credentials", "proxy", "invoices", "isp"] as const;
+export const TOOLSETS = ["account", "billing", "credentials", "proxy", "invoices", "isp"] as const;
 export type Toolset = (typeof TOOLSETS)[number];
 
 export type Config = {
