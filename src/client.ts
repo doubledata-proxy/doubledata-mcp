@@ -98,7 +98,7 @@ export type TrafficOrder = {
   traffic_balance: { proxy_type: string; remaining_bytes: number };
 };
 export type TopUp = {
-  top_up: { amount_cents: number; currency: string; payment_method_id: string; receipt_url: string | null };
+  top_up: { amount_cents: number; currency: string; receipt_url: string | null };
   balance_cents: number | null;
 };
 

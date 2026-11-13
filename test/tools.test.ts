@@ -283,7 +283,7 @@ describe("billing tools", () => {
     order: { id: "o1", product_id: productId, proxy_type: "residential", amount_gb: 10, price_per_gb_cents: 300, total_cents: 3000, payment_source: "balance" },
     traffic_balance: { proxy_type: "residential", remaining_bytes: 12_500_000_000 },
   };
-  const topUp = { top_up: { amount_cents: 2550, currency: "usd", payment_method_id: cardId, receipt_url: null }, balance_cents: 5149 };
+  const topUp = { top_up: { amount_cents: 2550, currency: "usd", receipt_url: null }, balance_cents: 5149 };
 
   it("buys a package from the balance only after confirmation", async () => {
     const { call, calls } = await connect({ routes: { "POST /traffic/orders": () => jsonResponse(order, 201) } });
