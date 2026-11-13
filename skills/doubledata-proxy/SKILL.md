@@ -47,7 +47,7 @@ See `references/targeting.md` for gateways, ports and username targeting. Use `b
 - ISP purchase: `isp_catalog` → `isp_quote` → show the total and get an explicit yes → `isp_order` with `confirm_purchase: true` → poll `isp_order_status`.
 - Traffic purchase: `traffic_products` → show the package and price and get an explicit yes → `buy_traffic` with `confirm_purchase: true`. It pays from the balance.
 - Paying by card: `list_payment_methods` → state the amount and the card and get an explicit yes → `add_funds` with `confirm_charge: true` ($10–$1,000), then buy from the balance. A `payment_declined` error means the card was declined or needs authentication: the user adds funds on the website.
-- If a purchase or charge times out or returns `temporarily_unavailable`, retry with the same `request_id` (shown in the result or error); it is never charged twice. Never retry with a new one before checking `get_balance`.
+- If a purchase or charge times out or returns `temporarily_unavailable` or `internal_error`, retry with the same `request_id` (shown in the result or error); it is never charged twice. Never retry with a new one before checking `get_balance`.
 - `isp_rotate` replaces IPs (old ones stop working) and uses the rotation allowance; confirm first.
 - `isp_cancel_renewal` needs `confirm_subscription_id`.
 
