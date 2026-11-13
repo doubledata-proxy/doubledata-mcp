@@ -74,11 +74,40 @@ export type TrafficLimits = {
   monthly_limit_mb?: number;
 };
 export type DownloadedFile = { bytes: Uint8Array; filename: string; contentType: string };
+export type TrafficProduct = {
+  id: string;
+  proxy_type: string;
+  name: string;
+  description: string;
+  amount_gb: number;
+  price_per_gb_cents: number;
+  total_cents: number;
+  requires_verification: boolean;
+};
+export type PaymentMethod = { id: string; type: string; brand: string; last4: string; exp_month: number; exp_year: number; is_default: boolean };
+export type TrafficOrder = {
+  order: {
+    id: string;
+    product_id: string;
+    proxy_type: string;
+    amount_gb: number;
+    price_per_gb_cents: number;
+    total_cents: number;
+    payment_source: "balance";
+  };
+  traffic_balance: { proxy_type: string; remaining_bytes: number };
+};
+export type TopUp = {
+  top_up: { amount_cents: number; currency: string; receipt_url: string | null };
+  balance_cents: number | null;
+};
 
 type RequestOptions = {
   method?: "GET" | "POST" | "PUT" | "DELETE";
   query?: Record<string, string | number | undefined>;
   body?: unknown;
+  // Sent as X-Request-ID. Purchases replay instead of charging twice when it repeats.
+  requestId?: string;
 };
 
 type ClientOptions = {
@@ -122,6 +151,7 @@ export class DoubleDataClient {
       "User-Agent": this.options.userAgent ?? "doubledata-mcp",
     };
     if (options.body !== undefined) headers["Content-Type"] = "application/json";
+    if (options.requestId) headers["X-Request-ID"] = options.requestId;
 
     for (let attempt = 0; ; attempt += 1) {
       const response = await this.fetchImpl(url, {
@@ -194,6 +224,22 @@ export class DoubleDataClient {
       filename: match?.[1] ?? `${invoiceId}.pdf`,
       contentType: response.headers.get("Content-Type") ?? "application/pdf",
     };
+  }
+
+  listTrafficProducts() {
+    return this.json<{ products: TrafficProduct[] }>("/traffic/products");
+  }
+
+  buyTraffic(productId: string, requestId: string) {
+    return this.json<TrafficOrder>("/traffic/orders", { method: "POST", body: { product_id: productId }, requestId });
+  }
+
+  listPaymentMethods() {
+    return this.json<{ payment_methods: PaymentMethod[] }>("/payment-methods");
+  }
+
+  addFunds(input: { amount_cents: number; payment_method_id?: string }, requestId: string) {
+    return this.json<TopUp>("/balance/top-ups", { method: "POST", body: input, requestId });
   }
 
   ispCatalog() {

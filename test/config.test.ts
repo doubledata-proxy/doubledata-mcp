@@ -34,7 +34,7 @@ describe("config", () => {
   });
 
   it("rejects unknown toolsets and plain-http API URLs", async () => {
-    await expect(loadConfig({ XDG_CONFIG_HOME: "/nonexistent", DOUBLEDATA_TOOLSETS: "account,billing" })).rejects.toThrow(/billing/);
+    await expect(loadConfig({ XDG_CONFIG_HOME: "/nonexistent", DOUBLEDATA_TOOLSETS: "account,payroll" })).rejects.toThrow(/payroll/);
     await expect(loadConfig({ XDG_CONFIG_HOME: "/nonexistent", DOUBLEDATA_API_URL: "http://example.com/api/v1" })).rejects.toThrow(/https/);
   });
 });

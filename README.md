@@ -8,6 +8,7 @@ MCP server and agent skills for [DoubleData Proxy](https://proxy.doubledata.com)
 - **"Give me 500 US sticky proxies for Playwright."**: proxy lists and ready-to-paste connection snippets.
 - **"Download all invoices since January for my accountant."**: invoice PDFs plus a CSV index.
 - **"Buy 10 private US ISP IPs" / "rotate these two IPs"**: Static ISP proxies from quote to rotation.
+- **"Add $50 from my card and buy 10 GB of residential traffic."**: top up the balance from a saved card and buy traffic packages.
 
 Everything you ask for can also be saved as a file (CSV, JSON, PDF, proxy lists) in a local export directory.
 
@@ -89,6 +90,7 @@ The [`skills/`](skills) folder holds standard `SKILL.md` agent skills: `doubleda
 | Toolset | Tools |
 | --- | --- |
 | `account` | `account_overview`, `get_balance`, `get_usage`, `export_usage` |
+| `billing` | `traffic_products`, `buy_traffic`, `list_payment_methods`, `add_funds` |
 | `credentials` | `list_credentials`, `get_credential`, `create_credential`, `delete_credential`, `get_traffic_limits`, `set_traffic_limits` |
 | `proxy` | `proxy_request`, `check_exit_ip`, `build_proxy_config`, `export_proxy_list` |
 | `invoices` | `list_invoices`, `get_invoice`, `download_invoice`, `download_all_invoices` |
@@ -111,11 +113,11 @@ CLI commands: `doubledata-mcp login`, `logout`, `whoami`, `--help`.
 
 ## Safety by design
 
-- **Confirmation for consequential actions.** `isp_order` requires `confirm_purchase: true`. `delete_credential` and `isp_cancel_renewal` require repeating the identifier. Each tool carries MCP `readOnlyHint` and `destructiveHint` annotations, so clients can ask before running them.
+- **Confirmation for consequential actions.** `buy_traffic` and `isp_order` require `confirm_purchase: true`; `add_funds` requires `confirm_charge: true`. `delete_credential` and `isp_cancel_renewal` require repeating the identifier. Each tool carries MCP `readOnlyHint` and `destructiveHint` annotations, so clients can ask before running them.
 - **Read-only mode** for dashboards and analysts.
 - **Secrets stay out of chat.** Passwords are masked unless you ask. Snippets use `$DOUBLEDATA_PROXY_PASSWORD`. Files that contain passwords are written with mode `600`. The API key goes in a header, never in a URL.
 - **Prompt-injection hygiene.** Fetched pages are wrapped as untrusted content, and redirects are returned rather than followed.
-- **Spend control.** Give an agent its own credential with `set_traffic_limits`.
+- **Spend control.** Give an agent its own credential with `set_traffic_limits`. `add_funds` charges at most $1,000 per call and per organization in 24 hours, and only saved cards that need no extra authentication. Purchases accept a `request_id`: retrying with the same one never charges twice. Set `DOUBLEDATA_READ_ONLY=true` or leave out the `billing` toolset to stop an agent from spending.
 
 
 ## How it compares

@@ -33,7 +33,7 @@ Report bytes as GB (1 GB = 10^9 bytes) and money in USD. Mention file paths for 
 
 ## Credentials
 
-- `create_credential` needs a `name` (≤24 chars) and `proxy_type` (`residential` default, `datacenter`, `mobile`). It fails with HTTP 402 `insufficient_balance` when the wallet and the product's GB package are both empty — tell the user to top up in the dashboard.
+- `create_credential` needs a `name` (≤24 chars) and `proxy_type` (`residential` default, `datacenter`, `mobile`). It fails with HTTP 402 `insufficient_balance` when the wallet and the product's GB package are both empty — offer `add_funds` (with the user's approval) or a top-up on the website.
 - Bound an agent's spend with `set_traffic_limits` (MB; 0 removes a limit).
 - `delete_credential` is permanent and needs `confirm_username`; ask the user before deleting.
 - Passwords stay masked. Only pass `reveal_password: true` when the user explicitly asks to see it.
@@ -45,9 +45,12 @@ See `references/targeting.md` for gateways, ports and username targeting. Use `b
 ## Money-moving and destructive actions
 
 - ISP purchase: `isp_catalog` → `isp_quote` → show the total and get an explicit yes → `isp_order` with `confirm_purchase: true` → poll `isp_order_status`.
+- Traffic purchase: `traffic_products` → show the package and price and get an explicit yes → `buy_traffic` with `confirm_purchase: true`. It pays from the balance.
+- Paying by card: `list_payment_methods` → state the amount and the card and get an explicit yes → `add_funds` with `confirm_charge: true` ($10–$1,000), then buy from the balance. A `payment_declined` error means the card was declined or needs authentication: the user adds funds on the website.
+- If a purchase or charge times out or returns `temporarily_unavailable` or `internal_error`, retry with the same `request_id` (shown in the result or error); it is never charged twice. Never retry with a new one before checking `get_balance`.
 - `isp_rotate` replaces IPs (old ones stop working) and uses the rotation allowance; confirm first.
 - `isp_cancel_renewal` needs `confirm_subscription_id`.
 
 ## Errors
 
-Errors include the API code and a request ID. Common ones: `unauthorized` (key revoked — create a new one), `insufficient_balance` (top up), `rate_limited` (wait `Retry-After`), `temporarily_unavailable` (retry later), `not_found` (wrong username/ID or another organization's resource).
+Errors include the API code and a request ID. Common ones: `unauthorized` (key revoked — create a new one), `insufficient_balance` (top up with `add_funds` after the user approves, or on the website), `payment_declined` (card declined or needs authentication), `rate_limited` (wait `Retry-After`), `temporarily_unavailable` (retry later), `not_found` (wrong username/ID or another organization's resource).

@@ -58,7 +58,9 @@ describe("tool registration", () => {
     const names = (await mcp.listTools()).tools.map((tool) => tool.name);
     expect(names).toContain("account_overview");
     expect(names).toContain("download_all_invoices");
-    for (const name of ["create_credential", "delete_credential", "proxy_request", "isp_order", "isp_rotate"]) expect(names).not.toContain(name);
+    expect(names).toContain("traffic_products");
+    expect(names).toContain("list_payment_methods");
+    for (const name of ["create_credential", "delete_credential", "proxy_request", "isp_order", "isp_rotate", "buy_traffic", "add_funds"]) expect(names).not.toContain(name);
   });
 
   it("only exposes selected toolsets and marks destructive tools", async () => {
@@ -269,5 +271,92 @@ describe("isp tools", () => {
     const { call, calls } = await connect({ routes: { "POST /isp/quotes": () => jsonResponse({ quote: { id: "q" } }) } });
     await call("isp_quote", { tier: "private", countries: [{ country: "us", quantity: 5 }] });
     expect(calls[0]?.body).toEqual({ tier: "private", countries: [{ country: "US", quantity: 5 }], term: "monthly", bandwidth_gb: 0, proxy_replacements: 0, features: [] });
+  });
+});
+
+describe("billing tools", () => {
+  const productId = "7a3f2a4e-1c2b-4d5e-8f90-a1b2c3d4e5f6";
+  const cardId = "0b7c9a52-77e2-4f3c-9a59-28f04a2f8f11";
+  const retryId = "6f1b7a0e-3a55-4a59-9d55-56f4ad1c2a10";
+  const product = { id: productId, proxy_type: "residential", name: "10 GB", description: "", amount_gb: 10, price_per_gb_cents: 300, total_cents: 3000, requires_verification: false };
+  const order = {
+    order: { id: "o1", product_id: productId, proxy_type: "residential", amount_gb: 10, price_per_gb_cents: 300, total_cents: 3000, payment_source: "balance" },
+    traffic_balance: { proxy_type: "residential", remaining_bytes: 12_500_000_000 },
+  };
+  const topUp = { top_up: { amount_cents: 2550, currency: "usd", receipt_url: null }, balance_cents: 5149 };
+
+  it("buys a package from the balance only after confirmation", async () => {
+    const { call, calls } = await connect({ routes: { "POST /traffic/orders": () => jsonResponse(order, 201) } });
+    expect((await call("buy_traffic", { product_id: productId })).isError).toBe(true);
+    expect(calls).toHaveLength(0);
+
+    const result = await call("buy_traffic", { product_id: productId, confirm_purchase: true });
+    expect(result.isError).toBe(false);
+    expect(result.text).toContain("Bought 10 GB of residential traffic for $30.00 from the balance");
+    expect(result.text).toContain("12.50 GB");
+    expect(calls[0]?.body).toEqual({ product_id: productId });
+    expect(calls[0]?.requestId).toMatch(/^[0-9a-f-]{36}$/);
+    expect(result.text).toContain(calls[0]!.requestId!);
+  });
+
+  it("gives every purchase its own request ID unless the agent retries one", async () => {
+    const { call, calls } = await connect({ routes: { "POST /traffic/orders": () => jsonResponse(order, 201) } });
+    await call("buy_traffic", { product_id: productId, confirm_purchase: true });
+    await call("buy_traffic", { product_id: productId, confirm_purchase: true });
+    await call("buy_traffic", { product_id: productId, confirm_purchase: true, request_id: retryId });
+    expect(calls[0]?.requestId).not.toBe(calls[1]?.requestId);
+    expect(calls[2]?.requestId).toBe(retryId);
+  });
+
+  it("explains a balance that is too low", async () => {
+    const { call } = await connect({
+      routes: { "POST /traffic/orders": () => jsonResponse({ error: { code: "insufficient_balance", message: "The organization balance cannot cover this order. Add funds and try again." } }, 402) },
+    });
+    const result = await call("buy_traffic", { product_id: productId, confirm_purchase: true });
+    expect(result.isError).toBe(true);
+    expect(result.text).toContain("402 (insufficient_balance)");
+  });
+
+  it("charges a saved card in cents only after confirmation and within limits", async () => {
+    const { call, calls } = await connect({ routes: { "POST /balance/top-ups": () => jsonResponse(topUp, 201) } });
+    for (const args of [{ amount_usd: 25.5 }, { amount_usd: 9.99, confirm_charge: true }, { amount_usd: 1000.01, confirm_charge: true }, { amount_usd: 10.001, confirm_charge: true }]) {
+      expect((await call("add_funds", args)).isError).toBe(true);
+    }
+    expect(calls).toHaveLength(0);
+
+    const result = await call("add_funds", { amount_usd: 25.5, payment_method_id: cardId, confirm_charge: true });
+    expect(result.isError).toBe(false);
+    expect(result.text).toContain("Charged $25.50 to the saved card. Balance is now $51.49.");
+    expect(calls[0]?.body).toEqual({ amount_cents: 2550, payment_method_id: cardId });
+  });
+
+  it("uses the default card when none is chosen and reports declines", async () => {
+    const { call, calls } = await connect({
+      routes: { "POST /balance/top-ups": () => jsonResponse({ error: { code: "payment_declined", message: "The saved payment method was declined or needs authentication. Add funds on the website." } }, 402) },
+    });
+    const result = await call("add_funds", { amount_usd: 10, confirm_charge: true });
+    expect(calls[0]?.body).toEqual({ amount_cents: 1000 });
+    expect(result.isError).toBe(true);
+    expect(result.text).toContain("payment_declined");
+  });
+
+  it("returns the request ID to retry with when the charge result is unknown", async () => {
+    const { call } = await connect({
+      routes: { "POST /balance/top-ups": () => { throw new TypeError("fetch failed"); } },
+    });
+    const result = await call("add_funds", { amount_usd: 50, confirm_charge: true, request_id: retryId });
+    expect(result.isError).toBe(true);
+    expect(result.text).toContain(`retry with request_id ${retryId}`);
+  });
+
+  it("lists packages and saved cards", async () => {
+    const { call } = await connect({
+      routes: {
+        "GET /traffic/products": () => jsonResponse({ products: [product] }),
+        "GET /payment-methods": () => jsonResponse({ payment_methods: [{ id: cardId, type: "card", brand: "visa", last4: "4242", exp_month: 1, exp_year: 2031, is_default: true }] }),
+      },
+    });
+    expect((await call("traffic_products")).text).toContain('"price_per_gb_cents": 300');
+    expect((await call("list_payment_methods")).text).toContain('"last4": "4242"');
   });
 });
